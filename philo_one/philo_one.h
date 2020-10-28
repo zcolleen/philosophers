@@ -2,9 +2,9 @@
 
 #ifndef PHILO_ONE_H
 # define PHILO_ONE_H
-# define P_NUMBER 5
+# define P_NUMBER 4
 # define T_SLEEP 200
-# define T_DIE 800
+# define T_DIE 410
 # define T_EAT 200
 # define MIL_MIC 1000
 # define U_SEC 1000000
@@ -15,19 +15,20 @@
 #include <stdio.h>
 #include <sys/time.h>
 
-char error;
-long time_to_sleep;
-long time_to_eat;
-long time_to_die;
+int 	error;
+long 	time_to_sleep;
+long 	time_to_eat;
+long 	time_to_die;
 struct timeval sim_start;
+char num_of_eat;
 
 typedef struct 				s_philosopher
 {
 	struct timeval			eating_time;
-	char 					index;
-	pthread_mutex_t 		left_fork;
-	pthread_mutex_t 		right_fork;
-	struct timeval			sim_time;
+	int 					index;
+	pthread_mutex_t 		*left_fork;
+	pthread_mutex_t 		*right_fork;
+	int 					count_eat;
 }							t_philosopher;
 
 typedef struct				s_main
@@ -43,6 +44,7 @@ char		*ft_itoa(int n);
 size_t		ft_strlen(const char *s);
 char		*ft_strjoin(char const *s1, char const *s2);
 int			str_out(long timestam, int philo_num, char *str);
+int 		parce_arg(int argc, char **argv, t_main *main);
 
 
 
