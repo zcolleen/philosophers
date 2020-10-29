@@ -1,6 +1,17 @@
 
 #include "philo_one.h"
 
+size_t	ft_strlen(const char *s)
+{
+	size_t i;
+
+	i = 0;
+	while (s[i] != '\0')
+		i++;
+	return (i);
+}
+
+
 static int	counter(unsigned long n)
 {
 	int s;

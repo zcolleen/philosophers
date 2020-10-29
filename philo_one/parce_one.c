@@ -12,7 +12,6 @@ static int			ft_atoi(const char *nptr)
 {
 	int		i;
 	long	d;
-	int		c;
 
 	d = 0;
 	i = 0;
@@ -39,7 +38,7 @@ static void 	put_arg(int j, t_main *main, char *str)
 	else if (j == 4)
 		time_to_sleep = ft_atoi(str);
 	else if (j == 5)
-		num_of_eat = (char)ft_atoi(str);
+		num_of_eat = ft_atoi(str);
 }
 
 static int 	argument_check(char *str, int j, t_main *main)
@@ -62,12 +61,10 @@ static int 	argument_check(char *str, int j, t_main *main)
 
 int 	parce_arg(int argc, char **argv, t_main *main)
 {
-	int i;
 	int j;
 
-	i = 0;
 	j = 1;
-	num_of_eat = 0;
+	num_of_eat = -1;
 	if (argc != 6 && argc != 5)
 	{
 		write(1, "Wrong number of arguments\n", 26);

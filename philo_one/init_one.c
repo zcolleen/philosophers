@@ -4,6 +4,7 @@
 int init_main_struct(t_main *str_main)
 {
 	error = -1;
+	enough_eat = str_main->phil_num;
 	if (!(str_main->thread = (pthread_t *)malloc(str_main->phil_num
 	* sizeof(pthread_t))))
 		return (1);

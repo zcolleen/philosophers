@@ -7,7 +7,7 @@ void 		print_out(int index, char *str)
 
 	gettimeofday(&time, NULL);
 	if (error == -1)
-		str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec - sim_start.tv_usec) / MIL_MIC, index, str);
+		str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec - sim_start.tv_usec) / MIL_MIC, index + 1, str);
 }
 
 void 		*check_death(void *args)
@@ -18,13 +18,15 @@ void 		*check_death(void *args)
 	philosopher = (t_philosopher *)args;
 	gettimeofday(&time, NULL);
 	//printf("%d\n", time_to_die);
-	while (((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC) ^ time_to_die)
+	while (((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC) < time_to_die)
 	{
-		gettimeofday(&time, NULL);
 		usleep(200);
+		gettimeofday(&time, NULL);
+		//printf("%ld\n", ((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC));
+		//usleep(200);
 	}
-	printf("%ld\n", ((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC));
-	str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec - sim_start.tv_usec) / MIL_MIC, philosopher->index, " has died\n");
+	//printf("%ld\n", ((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC));
+	str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec - sim_start.tv_usec) / MIL_MIC, philosopher->index + 1, " has died\n");
 	error = philosopher->index;
 	return (NULL);
 }
@@ -36,6 +38,14 @@ void 		put_time(t_philosopher *arg)
 	gettimeofday(&time, NULL);
 	arg->eating_time.tv_sec = time.tv_sec;
 	arg->eating_time.tv_usec = time.tv_usec;
+	arg->count_eat++;
+	if (!(arg->count_eat ^ num_of_eat))
+		enough_eat--;
+	if (!(enough_eat ^ 0))
+	{
+		error = arg->index;
+	//	write(1, "all has eaten enough\n", 21);
+	}
 }
 
 void 		custom_sleep(long sleep_time)
@@ -47,6 +57,7 @@ void 		custom_sleep(long sleep_time)
 	end_time = time.tv_sec * MIL_MIC + time.tv_usec / MIL_MIC + sleep_time;
 	while ((time.tv_sec * MIL_MIC + time.tv_usec / MIL_MIC) ^ end_time)
 	{
+		//usleep(300);
 		gettimeofday(&time, NULL);
 		usleep(200);
 	}
@@ -61,34 +72,35 @@ void		*eating(void *args)
 	arg = (t_philosopher *)args;
 	put_time(arg);
 	pthread_create(&death_check, NULL, check_death, (void *)arg);
+	if (arg->index % 2 == 1)
+		custom_sleep(time_to_eat);
 	while (error == -1)
 	{
 //		if (!(arg->index ^ 0))
 //		{
 //			pthread_mutex_lock(arg->right_fork);
+//			//write(1, " has taken left fork\n", 21);
 //			print_out(arg->index, " has taken right fork\n");
 //			pthread_mutex_lock(arg->left_fork);
+//			//write(1, " has taken right fork\n", 22);
 //			print_out(arg->index, " has taken left fork\n");
 //		}
 //		else
 //		{
 			pthread_mutex_lock(arg->left_fork);
-			//write(1, " has taken left fork\n", 21);
 			print_out(arg->index, " has taken left fork\n");
 			pthread_mutex_lock(arg->right_fork);
-			//write(1, " has taken right fork\n", 22);
 			print_out(arg->index, " has taken right fork\n");
 //		}
-		put_time(arg);
-		//write(1, " is eating\n", 11);
 		print_out(arg->index, " is eating\n");
+		put_time(arg);
+		//usleep(time_to_eat * MIL_MIC);
 		custom_sleep(time_to_eat);
-		pthread_mutex_unlock(arg->right_fork);
 		pthread_mutex_unlock(arg->left_fork);
-		//write(1, " is sleeping\n", 13);
+		pthread_mutex_unlock(arg->right_fork);
 		print_out(arg->index, " is sleeping\n");
+		//usleep(time_to_sleep * MIL_MIC);
 		custom_sleep(time_to_sleep);
-		//write(1, " is thinking\n", 13);
 		print_out(arg->index, " is thinking\n");
 	}
 	pthread_join(death_check, NULL);
@@ -105,8 +117,8 @@ int		init_thread(t_main *main, int i)
 		if (pthread_create(&(main->thread[i]), NULL, eating, (void *)&main->philosopher[i]))
 			return (1);
 		//usleep(10);
-		//i++;
 		i += 2;
+		//i += 2;
 	}
 	return (0);
 }
@@ -126,6 +138,7 @@ int		simulation(t_main *main)
 	while (i < main->phil_num)
 	{
 		main->philosopher[i].index = i;
+		main->philosopher[i].count_eat = -1;
 		main->philosopher[i].left_fork = &(main->mutex[i]);
 		main->philosopher[i].eating_time.tv_sec = 0;
 		main->philosopher[i].eating_time.tv_usec = 0;
@@ -142,10 +155,10 @@ int		simulation(t_main *main)
 //	else
 //		printf("not ok");
 	gettimeofday(&sim_start, NULL);
-	if (init_thread(main, 0) || init_thread(main, 1))
+	if (init_thread(main, 0))
 		return (1);
-//	if (init_thread(main, 1))
-//		return (1);
+	if (init_thread(main, 1))
+		return (1);
 	i = 0;
 	while (i < main->phil_num)
 	{
