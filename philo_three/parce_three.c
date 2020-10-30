@@ -1,5 +1,5 @@
 
-#include "philo_two.h"
+#include "philo_three.h"
 
 static int	ft_isdigit(int c)
 {

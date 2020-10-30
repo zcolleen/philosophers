@@ -41,9 +41,6 @@ typedef struct				s_main
 }							t_main;
 
 int			init_main_struct(t_main *str_main);
-char		*ft_itoa(int n);
-size_t		ft_strlen(const char *s);
-char		*ft_strjoin(char const *s1, char const *s2);
 int			str_out(long timestam, int philo_num, char *str);
 int 		parce_arg(int argc, char **argv, t_main *main);
 

@@ -1,5 +1,5 @@
 
-#include "philo_one.h"
+#include "philo_three.h"
 
 void 		print_out(int index, char *str)
 {
@@ -44,7 +44,7 @@ void 		put_time(t_philosopher *arg)
 	if (!(enough_eat ^ 0))
 	{
 		error = arg->index;
-	//	write(1, "all has eaten enough\n", 21);
+		//	write(1, "all has eaten enough\n", 21);
 	}
 }
 
@@ -64,7 +64,7 @@ void 		custom_sleep(long sleep_time)
 }
 
 
-void		*eating(void *args)
+void 	*sem_eating(void *args)
 {
 	t_philosopher 	*arg;
 	pthread_t 		death_check;
@@ -72,32 +72,19 @@ void		*eating(void *args)
 	arg = (t_philosopher *)args;
 	put_time(arg);
 	pthread_create(&death_check, NULL, check_death, (void *)arg);
-	if (arg->index % 2 == 1)
-		custom_sleep(time_to_eat);
 	while (error == -1)
 	{
-//		if (!(arg->index ^ 0))
-//		{
-//			pthread_mutex_lock(arg->right_fork);
-//			//write(1, " has taken left fork\n", 21);
-//			print_out(arg->index, " has taken right fork\n");
-//			pthread_mutex_lock(arg->left_fork);
-//			//write(1, " has taken right fork\n", 22);
-//			print_out(arg->index, " has taken left fork\n");
-//		}
-//		else
-//		{
-		pthread_mutex_lock(arg->left_fork);
+		sem_wait(sem);
 		print_out(arg->index, " has taken left fork\n");
-		pthread_mutex_lock(arg->right_fork);
+		sem_wait(sem);
 		print_out(arg->index, " has taken right fork\n");
 //		}
 		print_out(arg->index, " is eating\n");
 		put_time(arg);
 		//usleep(time_to_eat * MIL_MIC);
 		custom_sleep(time_to_eat);
-		pthread_mutex_unlock(arg->left_fork);
-		pthread_mutex_unlock(arg->right_fork);
+		sem_post(sem);
+		sem_post(sem);
 		print_out(arg->index, " is sleeping\n");
 		//usleep(time_to_sleep * MIL_MIC);
 		custom_sleep(time_to_sleep);
@@ -107,65 +94,42 @@ void		*eating(void *args)
 	return (NULL);
 }
 
-int		init_thread(t_main *main, int i)
+int 	sem_simulation(t_main *main)
 {
-//	int i;
-//
-//	i = 0;
-	while (i < main->phil_num)
-	{
-		if (pthread_create(&(main->thread[i]), NULL, eating, (void *)&main->philosopher[i]))
-			return (1);
-		//usleep(10);
-		i += 2;
-		//i += 2;
-	}
-	return (0);
-}
+	int		i;
+	pid_t	proc;
+	int 	status;
 
-int		simulation(t_main *main)
-{
-	int i;
-
-	i = 0;
-	while (i < main->phil_num)
-	{
-		if (pthread_mutex_init(&(main->mutex[i]), NULL))
-			return (1);
-		i++;
-	}
 	i = 0;
 	while (i < main->phil_num)
 	{
 		main->philosopher[i].index = i;
 		main->philosopher[i].count_eat = -1;
-		main->philosopher[i].left_fork = &(main->mutex[i]);
 		main->philosopher[i].eating_time.tv_sec = 0;
 		main->philosopher[i].eating_time.tv_usec = 0;
 		i++;
-		if (i < main->phil_num)
-			main->philosopher[i - 1].right_fork = &(main->mutex[i]);
 	}
-	main->philosopher[i - 1].right_fork = &(main->mutex[0]);
-//	if (main->philosopher[0].right_fork == main->philosopher[1].left_fork &&
-//	main->philosopher[1].right_fork == main->philosopher[2].left_fork &&
-//	main->philosopher[2].right_fork == main->philosopher[3].left_fork &&
-//	main->philosopher[3].right_fork == main->philosopher[0].left_fork)
-//		printf("ok");
-//	else
-//		printf("not ok");
+	i = 0;
 	gettimeofday(&sim_start, NULL);
-	if (init_thread(main, 0))
-		return (1);
-	if (init_thread(main, 1))
-		return (1);
+	while (i < main->phil_num)
+	{
+		if ((proc = fork()) == -1)
+			exit(1);
+		if (proc == 0)
+			sem_eating(&main->philosopher[i]);
+		//usleep(10);
+		waitpid(proc, &status, 0);
+		i++;
+		//i += 2;
+	}
 	i = 0;
 	while (i < main->phil_num)
 	{
-		pthread_join(main->thread[i], NULL);
-		pthread_mutex_destroy(&main->mutex[i]);
+		pthread_join(main->proc[i], NULL);
 		i++;
 	}
+	sem_unlink("zcolleen");
+	sem_close(sem);
 	return (0);
 }
 
@@ -174,11 +138,18 @@ int 	main(int argc, char **argv)
 	t_main			main;
 	t_philosopher 	philosopher;
 
+	//sem_unlink("zcolleen");
 	main.philosopher = &philosopher;
 	if (parce_arg(argc, argv, &main))
 		return (1);
+	//sem = sem_open("zcolleen", O_CREAT | O_EXCL, 0777, 1);
+//	perror("Error ");
 	//printf("num of philos: |%d|\n time_to_die: |%ld|\n time_to_eat: |%ld|\n time_to_sleep: |%ld|\n num_of_eat: |%d|", main.phil_num, time_to_die, time_to_eat, time_to_sleep, num_of_eat);
-	if (init_main_struct(&main) || simulation(&main))
+//	if (init_main_struct(&main) || simulation(&main))
+//		return (1);
+	//sem_unlink("zcolleen");
+	//sem_close(sem);
+	if (init_sem(&main) || init_main_struct(&main) || sem_simulation(&main))
 		return (1);
 	return (0);
 }

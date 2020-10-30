@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <semaphore.h>
 
 sem_t 	*sem;
@@ -37,7 +38,7 @@ typedef struct 				s_philosopher
 typedef struct				s_main
 {
 	int 					phil_num;
-	pthread_t				*thread;
+	pthread_t				*proc;
 	t_philosopher 			*philosopher;
 }							t_main;
 

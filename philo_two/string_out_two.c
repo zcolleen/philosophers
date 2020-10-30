@@ -1,5 +1,5 @@
 
-#include "philo_one.h"
+#include "philo_two.h"
 
 static size_t	ft_strlen(const char *s)
 {
