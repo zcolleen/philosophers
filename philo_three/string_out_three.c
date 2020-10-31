@@ -98,21 +98,3 @@ int		str_out(long timestam, int philo_num, char *str)
 	free(to_write);
 	return (0);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

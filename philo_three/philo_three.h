@@ -2,10 +2,6 @@
 
 #ifndef PHILO_ONE_H
 # define PHILO_ONE_H
-# define P_NUMBER 4
-# define T_SLEEP 200
-# define T_DIE 410
-# define T_EAT 200
 # define MIL_MIC 1000
 # define U_SEC 1000000
 #include <pthread.h>
@@ -16,6 +12,7 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <semaphore.h>
+#include <signal.h>
 
 sem_t 	*sem;
 int 	error;
@@ -30,16 +27,16 @@ typedef struct 				s_philosopher
 {
 	struct timeval			eating_time;
 	int 					index;
-	pthread_mutex_t 		*left_fork;
-	pthread_mutex_t 		*right_fork;
 	int 					count_eat;
 }							t_philosopher;
 
 typedef struct				s_main
 {
 	int 					phil_num;
-	pthread_t				*proc;
+	pthread_t				*death_thr;
+	int 					thread_count;
 	t_philosopher 			*philosopher;
+	pid_t 					*pids;
 }							t_main;
 
 int 		init_main_struct(t_main *str_main);
