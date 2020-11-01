@@ -1,7 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   parce_one.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zcolleen <zcolleen@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2020/11/01 18:32:20 by zcolleen          #+#    #+#             */
+/*   Updated: 2020/11/01 18:41:16 by zcolleen         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "philo_one.h"
 
-static int	ft_isdigit(int c)
+static int			ft_isdigit(int c)
 {
 	if (c >= '0' && c <= '9')
 		return (2048);
@@ -27,21 +38,21 @@ static int			ft_atoi(const char *nptr)
 	return ((int)d);
 }
 
-static void 	put_arg(int j, t_main *main, char *str)
+static void			put_arg(int j, t_main *main, char *str)
 {
 	if (j == 1)
 		main->phil_num = ft_atoi(str);
 	else if (j == 2)
-		time_to_die = ft_atoi(str);
+		g_time_to_die = ft_atoi(str);
 	else if (j == 3)
-		time_to_eat = ft_atoi(str);
+		g_time_to_eat = ft_atoi(str);
 	else if (j == 4)
-		time_to_sleep = ft_atoi(str);
+		g_time_to_sleep = ft_atoi(str);
 	else if (j == 5)
-		num_of_eat = ft_atoi(str);
+		g_num_of_eat = ft_atoi(str);
 }
 
-static int 	argument_check(char *str, int j, t_main *main)
+static	int			argument_check(char *str, int j, t_main *main)
 {
 	int i;
 
@@ -59,12 +70,12 @@ static int 	argument_check(char *str, int j, t_main *main)
 	return (0);
 }
 
-int 	parce_arg(int argc, char **argv, t_main *main)
+int					parce_arg(int argc, char **argv, t_main *main)
 {
 	int j;
 
 	j = 1;
-	num_of_eat = -1;
+	g_num_of_eat = -1;
 	if (argc != 6 && argc != 5)
 	{
 		write(1, "Wrong number of arguments\n", 26);

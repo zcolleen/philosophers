@@ -59,7 +59,6 @@ void 		custom_sleep(long sleep_time)
 	}
 }
 
-
 void 	*sem_eating(void *args)
 {
 	t_philosopher 	*arg;
@@ -124,7 +123,6 @@ int 	sem_simulation(t_main *main)
 {
 	int		i;
 	pid_t	proc;
-//	int 	status;
 
 	i = 0;
 	while (i < main->phil_num)

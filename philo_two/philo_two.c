@@ -1,101 +1,77 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philo_two.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zcolleen <zcolleen@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2020/11/01 20:28:25 by zcolleen          #+#    #+#             */
+/*   Updated: 2020/11/01 20:46:56 by zcolleen         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "philo_two.h"
 
-void 		print_out(int index, char *str)
+int			custom_sleep(long sleep_time)
 {
-	struct timeval time;
-
-	gettimeofday(&time, NULL);
-	if (error == -1)
-		str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec - sim_start.tv_usec) / MIL_MIC, index + 1, str);
-}
-
-void 		*check_death(void *args)
-{
-	t_philosopher 	*philosopher;
 	struct timeval	time;
+	long			end_time;
 
-	philosopher = (t_philosopher *)args;
-	gettimeofday(&time, NULL);
-	//printf("%d\n", time_to_die);
-	while (((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC) < time_to_die)
-	{
-		usleep(200);
-		gettimeofday(&time, NULL);
-		//printf("%ld\n", ((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC));
-		//usleep(200);
-	}
-	//printf("%ld\n", ((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC));
-	str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec - sim_start.tv_usec) / MIL_MIC, philosopher->index + 1, " died\n");
-	error = philosopher->index;
-	return (NULL);
-}
-
-void 		put_time(t_philosopher *arg)
-{
-	struct timeval time;
-
-	gettimeofday(&time, NULL);
-	arg->eating_time.tv_sec = time.tv_sec;
-	arg->eating_time.tv_usec = time.tv_usec;
-	arg->count_eat++;
-	if (!(arg->count_eat ^ num_of_eat))
-		enough_eat--;
-	if (!(enough_eat ^ 0))
-	{
-		error = arg->index;
-		//	write(1, "all has eaten enough\n", 21);
-	}
-}
-
-void 		custom_sleep(long sleep_time)
-{
-	struct timeval time;
-	long end_time;
-
-	gettimeofday(&time, NULL);
+	if (gettimeofday(&time, NULL))
+		return (1);
 	end_time = time.tv_sec * MIL_MIC + time.tv_usec / MIL_MIC + sleep_time;
 	while ((time.tv_sec * MIL_MIC + time.tv_usec / MIL_MIC) ^ end_time)
 	{
-		//usleep(300);
-		gettimeofday(&time, NULL);
-		usleep(200);
+		if (gettimeofday(&time, NULL))
+			return (1);
+		if (usleep(200))
+			return (1);
 	}
+	return (0);
 }
 
-
-void 	*sem_eating(void *args)
+void		*sem_eating(void *args)
 {
-	t_philosopher 	*arg;
-	pthread_t 		death_check;
+	t_philosopher	*arg;
+	pthread_t		death_check;
 
 	arg = (t_philosopher *)args;
-	put_time(arg);
-	pthread_create(&death_check, NULL, check_death, (void *)arg);
-	while (error == -1)
+	if (put_time(arg))
+		return (NULL);
+	if (pthread_create(&death_check, NULL, check_death, (void *)arg))
+		return (NULL);
+	if (arg->index % 2 == 1)
+		if (custom_sleep(g_time_to_eat))
+			return (NULL);
+	while (g_error == -1)
 	{
-		sem_wait(sem);
-		print_out(arg->index, " has taken left fork\n");
-		sem_wait(sem);
-		print_out(arg->index, " has taken right fork\n");
-//		}
-		print_out(arg->index, " is eating\n");
-		put_time(arg);
-		//usleep(time_to_eat * MIL_MIC);
-		custom_sleep(time_to_eat);
-		sem_post(sem);
-		sem_post(sem);
-		print_out(arg->index, " is sleeping\n");
-		//usleep(time_to_sleep * MIL_MIC);
-		custom_sleep(time_to_sleep);
-		print_out(arg->index, " is thinking\n");
+		if (sem_wait(g_sem) || print_out(arg->index, " has taken fork\n") ||
+		sem_wait(g_sem) || print_out(arg->index, " has taken fork\n") ||
+		print_out(arg->index, " is eating\n") || put_time(arg) ||
+		custom_sleep(g_time_to_eat) || sem_post(g_sem) ||
+		sem_post(g_sem) || print_out(arg->index, " is sleeping\n") ||
+		custom_sleep(g_time_to_sleep) ||
+		print_out(arg->index, " is thinking\n"))
+			return (NULL);
 	}
-	pthread_join(death_check, NULL);
+	if (pthread_join(death_check, NULL))
+		return (NULL);
 	return (NULL);
 }
 
+int			init_thread(t_main *main, int i)
+{
+	while (i < main->phil_num)
+	{
+		if (pthread_create(&(main->thread[i]),
+			NULL, sem_eating, (void *)&main->philosopher[i]))
+			return (1);
+		i += 2;
+	}
+	return (0);
+}
 
-int 	sem_simulation(t_main *main)
+int			sem_simulation(t_main *main)
 {
 	int i;
 
@@ -108,43 +84,30 @@ int 	sem_simulation(t_main *main)
 		main->philosopher[i].eating_time.tv_usec = 0;
 		i++;
 	}
+	if (gettimeofday(&g_sim_start, NULL))
+		return (1);
+	if (init_thread(main, 0) ||
+	init_thread(main, 1))
+		return (1);
 	i = 0;
-	gettimeofday(&sim_start, NULL);
-	while (i < main->phil_num)
+	while (i++ < main->phil_num)
 	{
-		if (pthread_create(&(main->thread[i]), NULL, sem_eating, (void *)&main->philosopher[i]))
+		if (pthread_join(main->thread[i], NULL))
 			return (1);
-		//usleep(10);
-		i++;
-		//i += 2;
-	}
-	i = 0;
-	while (i < main->phil_num)
-	{
-		pthread_join(main->thread[i], NULL);
-		i++;
 	}
 	sem_unlink("zcolleen");
-	sem_close(sem);
+	sem_close(g_sem);
 	return (0);
 }
 
-int 	main(int argc, char **argv)
+int			main(int argc, char **argv)
 {
 	t_main			main;
-	t_philosopher 	philosopher;
+	t_philosopher	philosopher;
 
-	//sem_unlink("zcolleen");
 	main.philosopher = &philosopher;
 	if (parce_arg(argc, argv, &main))
 		return (1);
-	//sem = sem_open("zcolleen", O_CREAT | O_EXCL, 0777, 1);
-//	perror("Error ");
-	//printf("num of philos: |%d|\n time_to_die: |%ld|\n time_to_eat: |%ld|\n time_to_sleep: |%ld|\n num_of_eat: |%d|", main.phil_num, time_to_die, time_to_eat, time_to_sleep, num_of_eat);
-//	if (init_main_struct(&main) || simulation(&main))
-//		return (1);
-	//sem_unlink("zcolleen");
-	//sem_close(sem);
 	if (init_sem(&main) || init_main_struct(&main) || sem_simulation(&main))
 		return (1);
 	return (0);
