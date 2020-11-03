@@ -52,5 +52,6 @@ int							parce_arg(int argc, char **argv, t_main *main);
 int							init_sem(t_main *main);
 void						*check_death(void *args);
 int							print_out(int index, char *str);
+int							put_time(t_philosopher *arg);
 
 #endif

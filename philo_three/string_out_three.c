@@ -1,3 +1,14 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   string_out_three.c                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zcolleen <zcolleen@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2020/11/03 15:08:40 by zcolleen          #+#    #+#             */
+/*   Updated: 2020/11/03 15:10:27 by zcolleen         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "philo_three.h"
 
@@ -11,8 +22,7 @@ static size_t	ft_strlen(const char *s)
 	return (i);
 }
 
-
-static int	counter(unsigned long n)
+static int		counter(unsigned long n)
 {
 	int s;
 
@@ -25,7 +35,7 @@ static int	counter(unsigned long n)
 	return (s);
 }
 
-static void	record(char *ptr, unsigned long n, int count_num)
+static void		record(char *ptr, unsigned long n, int count_num)
 {
 	int i;
 
@@ -41,7 +51,8 @@ static void	record(char *ptr, unsigned long n, int count_num)
 	ptr[i] = (char)(n % 10 + '0');
 }
 
-int 	put_in_buf(const char *ptr, const char *ptr_2, char *to_write, const char *str)
+int				put_in_buf(const char *ptr,
+const char *ptr_2, char *to_write, const char *str)
 {
 	int i;
 	int count;
@@ -53,8 +64,7 @@ int 	put_in_buf(const char *ptr, const char *ptr_2, char *to_write, const char *
 		to_write[count] = ptr[count];
 		count++;
 	}
-	to_write[count] = ' ';
-	count++;
+	to_write[count++] = ' ';
 	while (ptr_2[i] != '\0')
 	{
 		to_write[count] = ptr_2[i];
@@ -71,27 +81,27 @@ int 	put_in_buf(const char *ptr, const char *ptr_2, char *to_write, const char *
 	return (count);
 }
 
-int		str_out(long timestam, int philo_num, char *str)
+int				str_out(long timestam, int philo_num, char *str)
 {
-	char 		*ptr;
-	size_t 		count;
-	char 		*ptr_2;
-	char 		*to_write;
+	char		*ptr;
+	size_t		count;
+	char		*ptr_2;
+	char		*to_write;
 
 	count = counter(philo_num);
 	if (!(ptr = (char *)malloc(sizeof(char) * (count + 1))))
-		return (1);
+		exit(1);
 	record(ptr, philo_num, count);
 	count = counter(timestam);
 	if (!(ptr_2 = (char *)malloc(sizeof(char) * (count + 1))))
-		return (1);
+		exit(1);
 	record(ptr_2, timestam, count);
 	count = ft_strlen(ptr) + ft_strlen(ptr_2) + ft_strlen(str) + 1;
 	if (!(to_write = (char *)malloc(sizeof(char) * (count + 1))))
-		return (1);
+		exit(1);
 	to_write[count] = '\0';
 	count = put_in_buf(ptr_2, ptr, to_write, str);
-	if (error == -1)
+	if (g_error == -1)
 		write(1, to_write, count);
 	free(ptr);
 	free(ptr_2);

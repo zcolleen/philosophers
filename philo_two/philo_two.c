@@ -45,8 +45,8 @@ void		*sem_eating(void *args)
 			return (NULL);
 	while (g_error == -1)
 	{
-		if (sem_wait(g_sem) || print_out(arg->index, " has taken fork\n") ||
-		sem_wait(g_sem) || print_out(arg->index, " has taken fork\n") ||
+		if (sem_wait(g_sem) || print_out(arg->index, " has taken a fork\n") ||
+		sem_wait(g_sem) || print_out(arg->index, " has taken a fork\n") ||
 		print_out(arg->index, " is eating\n") || put_time(arg) ||
 		custom_sleep(g_time_to_eat) || sem_post(g_sem) ||
 		sem_post(g_sem) || print_out(arg->index, " is sleeping\n") ||

@@ -1,117 +1,55 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philo_three.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: zcolleen <zcolleen@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2020/11/03 15:02:53 by zcolleen          #+#    #+#             */
+/*   Updated: 2020/11/03 15:14:50 by zcolleen         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "philo_three.h"
 
-void 		print_out(int index, char *str)
+void	*sem_eating(void *args)
 {
-	struct timeval time;
-
-	gettimeofday(&time, NULL);
-	if (error == -1)
-		str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec - sim_start.tv_usec) / MIL_MIC, index + 1, str);
-}
-
-void 		*check_death(void *args)
-{
-	t_philosopher 	*philosopher;
-	struct timeval	time;
-
-	philosopher = (t_philosopher *)args;
-	gettimeofday(&time, NULL);
-	while (((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC) < time_to_die)
-	{
-		usleep(200);
-		gettimeofday(&time, NULL);
-		//printf("%ld\n", ((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC));
-		//usleep(200);
-	}
-	//printf("%ld\n", ((time.tv_sec - philosopher->eating_time.tv_sec) * MIL_MIC + (time.tv_usec - philosopher->eating_time.tv_usec) / MIL_MIC));
-	str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec - sim_start.tv_usec) / MIL_MIC, philosopher->index + 1, " has died\n");
-	exit(1);
-}
-
-void 		put_time(t_philosopher *arg)
-{
-	struct timeval time;
-
-	gettimeofday(&time, NULL);
-	arg->eating_time.tv_sec = time.tv_sec;
-	arg->eating_time.tv_usec = time.tv_usec;
-	arg->count_eat++;
-	if (!(arg->count_eat ^ num_of_eat))
-	{
-		sem_post(sem);
-		sem_post(sem);
-		exit(0);
-	}
-}
-
-void 		custom_sleep(long sleep_time)
-{
-	struct timeval time;
-	long end_time;
-
-	gettimeofday(&time, NULL);
-	end_time = time.tv_sec * MIL_MIC + time.tv_usec / MIL_MIC + sleep_time;
-	while ((time.tv_sec * MIL_MIC + time.tv_usec / MIL_MIC) ^ end_time)
-	{
-		gettimeofday(&time, NULL);
-		usleep(200);
-	}
-}
-
-void 	*sem_eating(void *args)
-{
-	t_philosopher 	*arg;
-	pthread_t 		death_check;
+	t_philosopher	*arg;
+	pthread_t		death_check;
 
 	arg = (t_philosopher *)args;
 	put_time(arg);
-	pthread_create(&death_check, NULL, check_death, (void *)arg);
-	while (error == -1)
-	{
-		sem_wait(sem);
-		print_out(arg->index, " has taken left fork\n");
-		sem_wait(sem);
-		print_out(arg->index, " has taken right fork\n");
-		print_out(arg->index, " is eating\n");
-		put_time(arg);
-		custom_sleep(time_to_eat);
-		sem_post(sem);
-		sem_post(sem);
-		print_out(arg->index, " is sleeping\n");
-		custom_sleep(time_to_sleep);
-		print_out(arg->index, " is thinking\n");
-	}
-	pthread_join(death_check, NULL);
+	if (arg->index % 2 == 1)
+		custom_sleep(g_time_to_eat);
+	if (pthread_create(&death_check, NULL, check_death, (void *)arg))
+		exit(1);
+	while (g_error == -1)
+		algorithm(arg);
+	if (pthread_join(death_check, NULL))
+		exit(1);
 	exit(0);
 }
 
-
-void 	ft_kill(t_main *main)
-{
-	int i;
-
-	i = 0;
-	while (i < main->phil_num)
-	{
-		kill(main->pids[i], 9);
-		i++;
-	}
-}
-
-
-void 	wait_pid(t_main *main)
+void	wait_pid(t_main *main)
 {
 	int stop;
 	int status;
+	int	i;
 
+	i = 0;
 	stop = main->phil_num;
 	while (stop)
 	{
 		waitpid(-1, &status, 0);
-		if (WEXITSTATUS(status) == 1)
+		if (WEXITSTATUS(status) == 2)
 		{
-			ft_kill(main);
+			i = 0;
+			while (i < main->phil_num)
+			{
+				if (kill(main->pids[i], 9))
+					exit(1);
+				i++;
+			}
 			stop = 0;
 		}
 		else
@@ -119,10 +57,24 @@ void 	wait_pid(t_main *main)
 	}
 }
 
-int 	sem_simulation(t_main *main)
+void	init_forks(t_main *main, int i)
+{
+	pid_t	proc;
+
+	while (i < main->phil_num)
+	{
+		if ((proc = fork()) == -1)
+			exit(1);
+		if (proc == 0)
+			sem_eating(&main->philosopher[i]);
+		main->pids[i] = proc;
+		i += 2;
+	}
+}
+
+int		sem_simulation(t_main *main)
 {
 	int		i;
-	pid_t	proc;
 
 	i = 0;
 	while (i < main->phil_num)
@@ -133,27 +85,20 @@ int 	sem_simulation(t_main *main)
 		main->philosopher[i].eating_time.tv_usec = 0;
 		i++;
 	}
-	i = 0;
-	gettimeofday(&sim_start, NULL);
-	while (i < main->phil_num)
-	{
-		if ((proc = fork()) == -1)
-			exit(1);
-		if (proc == 0)
-			sem_eating(&main->philosopher[i]);
-		main->pids[i] = proc;
-		i++;
-	}
+	if (gettimeofday(&sim_start, NULL))
+		exit(1);
+	init_forks(main, 0);
+	init_forks(main, 1);
 	wait_pid(main);
 	sem_unlink("zcolleen");
-	sem_close(sem);
+	sem_close(g_sem);
 	return (0);
 }
 
-int 	main(int argc, char **argv)
+int		main(int argc, char **argv)
 {
 	t_main			main;
-	t_philosopher 	philosopher;
+	t_philosopher	philosopher;
 
 	main.philosopher = &philosopher;
 	if (parce_arg(argc, argv, &main))

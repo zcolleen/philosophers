@@ -12,12 +12,7 @@
 
 #ifndef PHILO_ONE_H
 # define PHILO_ONE_H
-# define P_NUMBER 4
-# define T_SLEEP 200
-# define T_DIE 410
-# define T_EAT 200
 # define MIL_MIC 1000
-# define U_SEC 1000000
 # include <pthread.h>
 # include <stdlib.h>
 # include <string.h>
