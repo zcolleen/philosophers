@@ -101,8 +101,7 @@ int				str_out(long timestam, int philo_num, char *str)
 		exit(1);
 	to_write[count] = '\0';
 	count = put_in_buf(ptr_2, ptr, to_write, str);
-	if (g_error == -1)
-		write(1, to_write, count);
+	write(1, to_write, count);
 	free(ptr);
 	free(ptr_2);
 	free(to_write);

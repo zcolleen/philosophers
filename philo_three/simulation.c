@@ -18,9 +18,8 @@ void	print_out(int index, char *str)
 
 	if (gettimeofday(&time, NULL))
 		exit(1);
-	if (g_error == -1)
-		str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec -
-		sim_start.tv_usec) / MIL_MIC, index + 1, str);
+	str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec -
+	sim_start.tv_usec) / MIL_MIC, index + 1, str);
 }
 
 void	*check_death(void *args)

@@ -6,7 +6,7 @@
 /*   By: zcolleen <zcolleen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/03 15:02:53 by zcolleen          #+#    #+#             */
-/*   Updated: 2020/11/03 15:14:50 by zcolleen         ###   ########.fr       */
+/*   Updated: 2020/11/03 16:53:08 by zcolleen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,11 +23,8 @@ void	*sem_eating(void *args)
 		custom_sleep(g_time_to_eat);
 	if (pthread_create(&death_check, NULL, check_death, (void *)arg))
 		exit(1);
-	while (g_error == -1)
+	while (1)
 		algorithm(arg);
-	if (pthread_join(death_check, NULL))
-		exit(1);
-	exit(0);
 }
 
 void	wait_pid(t_main *main)
@@ -36,8 +33,8 @@ void	wait_pid(t_main *main)
 	int status;
 	int	i;
 
-	i = 0;
 	stop = main->phil_num;
+	i = 0;
 	while (stop)
 	{
 		waitpid(-1, &status, 0);
@@ -46,8 +43,7 @@ void	wait_pid(t_main *main)
 			i = 0;
 			while (i < main->phil_num)
 			{
-				if (kill(main->pids[i], 9))
-					exit(1);
+				kill(main->pids[i], 9);
 				i++;
 			}
 			stop = 0;

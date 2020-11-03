@@ -24,7 +24,6 @@
 # include <signal.h>
 
 sem_t						*g_sem;
-int							g_error;
 long						g_time_to_sleep;
 long						g_time_to_eat;
 long						g_time_to_die;

@@ -42,7 +42,8 @@ void		*check_death(void *args)
 	{
 		if (usleep(200))
 			return (NULL);
-		gettimeofday(&time, NULL);
+		if (gettimeofday(&time, NULL))
+			return (NULL);
 	}
 	if (str_out((time.tv_sec - sim_start.tv_sec) * MIL_MIC + (time.tv_usec -
 	sim_start.tv_usec) / MIL_MIC, philosopher->index + 1, " died\n"))

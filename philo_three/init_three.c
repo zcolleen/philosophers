@@ -14,7 +14,6 @@
 
 int	init_main_struct(t_main *str_main)
 {
-	g_error = -1;
 	if (!(str_main->philosopher = (t_philosopher *)malloc(str_main->phil_num *
 	sizeof(t_philosopher))))
 		return (1);
